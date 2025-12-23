@@ -1,0 +1,228 @@
+BootStrap: docker
+From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
+
+%files
+    TMInterface /opt/build-files/TMInterface
+    TmForever   /opt/build-files/TmForever
+    TMLoader    /opt/build-files/TMLoader
+
+    start-vnc.sh /usr/local/bin/start-vnc.sh
+    base-entrypoint.sh /etc/base-entrypoint.sh
+
+%post
+    # Supress interactive menu while installing keyboard-configuration
+    export DEBIAN_FRONTEND=noninteractive
+    # Temporary fix for NVIDIA container repository
+    apt-get clean && \
+    apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/$(cat /etc/os-release | grep '^ID=' | awk -F'=' '{print $2}')$(cat /etc/os-release | grep '^VERSION_ID=' | awk -F'=' '{print $2}' | sed 's/[^0-9]*//g')/x86_64/3bf863cc.pub" && \
+    rm -rf /var/lib/apt/lists/*
+
+    # Install locales to prevent errors
+    apt-get clean && \
+    apt-get update && apt-get install --no-install-recommends -y locales && \
+    rm -rf /var/lib/apt/lists/* && \
+    locale-gen en_US.UTF-8
+
+    # Desktop + tools
+    dpkg --add-architecture i386 && \
+    apt-get update && apt-get install --no-install-recommends -y \
+        software-properties-common \
+        apt-transport-https \
+        apt-utils \
+        build-essential \
+        ca-certificates \
+        curl \
+        file \
+        wget \
+        bzip2 \
+        gzip \
+        p7zip-full \
+        xz-utils \
+        zip \
+        unzip \
+        zstd \
+        gcc \
+        git \
+        jq \
+        make \
+        mlocate \
+        nano \
+        vim \
+        htop \
+        xarchiver \
+        desktop-file-utils \
+        gucharmap \
+        policykit-desktop-privileges \
+        libpulse0 \
+        supervisor \
+        net-tools \
+        libgtk-3-bin \
+        vainfo \
+        vdpauinfo \
+        mesa-utils \
+        mesa-utils-extra \
+        dbus-x11 \
+        libdbus-c++-1-0v5 \
+        dmz-cursor-theme \
+        numlockx \
+        xcursor-themes \
+        xvfb \
+        strace \
+        xserver-xorg-video-dummy x11-apps \
+        xdotool \
+        fluxbox \
+        wmctrl \
+        compton \
+        cabextract \
+        gnupg \
+        gosu \
+        gpg-agent \
+        pulseaudio \
+        pulseaudio-utils \
+        sudo \
+        tzdata \
+        winbind \
+        zenity \
+	    wine32 \
+	    x11vnc \
+        x11-utils \
+        tigervnc-standalone-server \
+        tigervnc-common	&&\
+    # Support libva and VA-API through NVIDIA VDPAU
+    curl -fsSL -o /tmp/vdpau-va-driver.deb "https://launchpad.net/~saiarcot895/+archive/ubuntu/chromium-dev/+files/vdpau-va-driver_0.7.4-6ubuntu2~ppa1~18.04.1_amd64.deb" && \
+    apt-get install --no-install-recommends -y /tmp/vdpau-va-driver.deb #&& \
+    #rm -rf /var/lib/apt/lists/*
+    #rm -rf /tmp/* && \
+
+    # Install VirtualGL
+    VIRTUALGL_VERSION=3.1
+    VIRTUALGL_URL="https://sourceforge.net/projects/virtualgl/files"
+
+    curl -fsSL -O "${VIRTUALGL_URL}/virtualgl_${VIRTUALGL_VERSION}_amd64.deb"
+    curl -fsSL -O "${VIRTUALGL_URL}/virtualgl32_${VIRTUALGL_VERSION}_amd64.deb"
+    apt-get update && apt-get install -y --no-install-recommends ./virtualgl_${VIRTUALGL_VERSION}_amd64.deb ./virtualgl32_${VIRTUALGL_VERSION}_amd64.deb
+    rm -f "virtualgl_${VIRTUALGL_VERSION}_amd64.deb" "virtualgl32_${VIRTUALGL_VERSION}_amd64.deb"
+    rm -rf /var/lib/apt/lists/*
+    chmod u+s /usr/lib/libvglfaker.so
+    chmod u+s /usr/lib/libdlfaker.so
+    chmod u+s /usr/lib32/libvglfaker.so
+    chmod u+s /usr/lib32/libdlfaker.so
+    chmod u+s /usr/lib/i386-linux-gnu/libvglfaker.so
+    chmod u+s /usr/lib/i386-linux-gnu/libdlfaker.so
+
+    # ----------------------------------------------------
+    # ----------- TrackMania Installation Section --------
+    # ----------------------------------------------------
+     
+    export WINEDLLOVERRIDES=winemenubuilder.exe=d # this is just to supress some warnings
+
+    # Install WineHQ
+    WINE_BRANCH="stable"
+    wget -nv -O- https://dl.winehq.org/wine-builds/winehq.key | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add - \
+    && echo "deb https://dl.winehq.org/wine-builds/ubuntu/ $(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) main" >> /etc/apt/sources.list \
+    && dpkg --add-architecture i386 \
+    && apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --install-recommends winehq-${WINE_BRANCH} \
+    && rm -rf /var/lib/apt/lists/*
+
+    # Install winetricks
+    wget -nv -O /usr/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
+    && chmod +x /usr/bin/winetricks
+
+    export WINEARCH=win32
+    export WINEPREFIX=/opt/tmnf
+    mkdir -p $WINEPREFIX
+    
+    # Initialize Wine (headless)
+    xvfb-run --auto-servernum wineboot --init
+    wineserver --wait
+
+    xvfb-run --auto-servernum winetricks -q corefonts vcrun6 d3dx9_43
+
+    # Install TMNF
+    TM_INSTALLER_URL="https://nadeo-download.cdn.ubi.com/trackmaniaforever/tmnationsforever_setup.exe"
+    TM_SETUP_FILE="tmnationsforever_setup.exe"
+    
+    wget -O "$TM_SETUP_FILE" "$TM_INSTALLER_URL"
+    xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+        wine "$TM_SETUP_FILE" \
+        /VERYSILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /SP- \
+        /DIR="C:\\Program_Files_x86\\TmNationsForever"
+    rm -f "$TM_SETUP_FILE"
+
+    # NOTE: Copying pre-configured TMLoader/TMInterface files because automating their complex GUI 
+    # setup in this headless environment is overly cumbersome.
+
+    cp -r /opt/build-files/TMLoader/. "$WINEPREFIX/drive_c/Program_Files_x86/TmNationsForever/"
+
+    # we save them at another temp location (later host tmp gets mounted inside the container so for that we save else where) and during the post script we will copy 
+    # them to the right location
+    mkdir -p /opt/tmnf_user_template
+    cp -r /opt/build-files/TMInterface /opt/tmnf_user_template/
+    cp -r /opt/build-files/TmForever   /opt/tmnf_user_template/
+    
+    # NOTE:this can be very dangerous if singularity mounts the host tmp dir
+    #rm -rf /tmp/*
+
+    # ----------------------------------------------------
+    # --------------   VNC Setup -------------------------
+    # ----------------------------------------------------
+    mkdir -p /opt/.vnc
+    echo mypasswd | vncpasswd -f > /opt/.vnc/passwd
+    echo 'export PASSWD=mypasswd' >> $SINGULARITY_ENVIRONMENT
+    chmod 600 /opt/.vnc/passwd
+    echo 'export PASSWD_PATH=/opt/.vnc/passwd' >> $SINGULARITY_ENVIRONMENT
+
+    # ----------------------------------------------------
+    # ----------- Final Configuration --------------------
+    # ----------------------------------------------------
+    
+    # Make scripts executable
+    chmod 755 /etc/base-entrypoint.sh
+    chmod 755 /usr/local/bin/start-vnc.sh
+
+    # Fluxbox config
+    mkdir -p /root/.fluxbox && \
+    echo "session.session0: true" > /root/.fluxbox/init
+
+    # Since we built as root but run as a normal user, everything in /opt must be writable.
+    chmod -R 777 $WINEPREFIX
+    chmod -R 777 /opt/tmnf_user_template
+
+%runscript
+    
+    echo "Starting container as user: $USER"
+    
+    DOCS_PATH="$WINEPREFIX/drive_c/users/$USER/Documents"
+    
+    mkdir -p "$DOCS_PATH"
+
+    # Copy TMInterface and TmForever dirs
+    echo "Initializing TMInterface configuration for $USER..."
+    cp -r /opt/tmnf_user_template/TMInterface "$DOCS_PATH/"
+    
+    echo "Initializing TmForever configuration for $USER..."
+    cp -r /opt/tmnf_user_template/TmForever "$DOCS_PATH/"
+
+    exec /etc/base-entrypoint.sh "$@"
+
+%environment
+    TZ=UTC
+    REFRESH=60
+    PASSWD=mypasswd
+    NOVNC_ENABLE=false
+    WEBRTC_ENCODER=nvh264enc
+    WEBRTC_ENABLE_RESIZE=false
+    ENABLE_AUDIO=false
+    ENABLE_BASIC_AUTH=true
+    LANG=en_US.UTF-8
+    LANGUAGE=en_US:en
+    LC_ALL=en_US.UTF-8
+    DISPLAY=:0
+    VGL_REFRESHRATE=60
+    VGL_ISACTIVE=1
+    VGL_DISPLAY=egl
+    VGL_WM=1
+    NVIDIA_DRIVER_CAPABILITIES=all
+    PULSE_SERVER=127.0.0.1:4713
+    PORT=5900
