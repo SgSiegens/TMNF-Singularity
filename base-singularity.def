@@ -5,9 +5,11 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     TMInterface /opt/build-files/TMInterface
     TmForever   /opt/build-files/TmForever
     TMLoader    /opt/build-files/TMLoader
+    #paths.reg   /opt/build-files/paths.reg
 
     start-vnc.sh /usr/local/bin/start-vnc.sh
-    base-entrypoint.sh /etc/base-entrypoint.sh
+    base-entrypoint.sh /usr/local/bin/base-entrypoint.sh
+    setup-tmnf-prefix.sh /usr/local/bin/setup-tmnf-prefix.sh
 
 %post
     # Supress interactive menu while installing keyboard-configuration
@@ -68,6 +70,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
         xcursor-themes \
         xvfb \
         strace \
+        rsync \
         xserver-xorg-video-dummy x11-apps \
         xdotool \
         fluxbox \
@@ -155,12 +158,11 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
     cp -r /opt/build-files/TMLoader/. "$WINEPREFIX/drive_c/Program_Files_x86/TmNationsForever/"
 
-    # we save them at another temp location (later host tmp gets mounted inside the container so for that we save else where) and during the post script we will copy 
-    # them to the right location
-    mkdir -p /opt/tmnf_user_template
-    cp -r /opt/build-files/TMInterface /opt/tmnf_user_template/
-    cp -r /opt/build-files/TmForever   /opt/tmnf_user_template/
-    
+    WINE_ROOT_DOCS="/opt/tmnf/drive_c/users/root/Documents"
+    mkdir -p "$WINE_ROOT_DOCS"
+    cp -r /opt/build-files/TMInterface "$WINE_ROOT_DOCS/"
+    cp -r /opt/build-files/TmForever   "$WINE_ROOT_DOCS/"
+
     # NOTE:this can be very dangerous if singularity mounts the host tmp dir
     #rm -rf /tmp/*
 
@@ -178,8 +180,9 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     # ----------------------------------------------------
     
     # Make scripts executable
-    chmod 755 /etc/base-entrypoint.sh
+    chmod 755 /usr/local/bin/base-entrypoint.sh
     chmod 755 /usr/local/bin/start-vnc.sh
+    chmod 755 /usr/local/bin/setup-tmnf-prefix.sh
 
     # Fluxbox config
     mkdir -p /root/.fluxbox && \
@@ -187,24 +190,14 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
     # Since we built as root but run as a normal user, everything in /opt must be writable.
     chmod -R 777 $WINEPREFIX
-    chmod -R 777 /opt/tmnf_user_template
 
 %runscript
+    echo "Starting container for user: ${USER}"
     
-    echo "Starting container as user: $USER"
+    /usr/local/bin/setup-tmnf-prefix.sh
     
-    DOCS_PATH="$WINEPREFIX/drive_c/users/$USER/Documents"
-    
-    mkdir -p "$DOCS_PATH"
-
-    # Copy TMInterface and TmForever dirs
-    echo "Initializing TMInterface configuration for $USER..."
-    cp -r /opt/tmnf_user_template/TMInterface "$DOCS_PATH/"
-    
-    echo "Initializing TmForever configuration for $USER..."
-    cp -r /opt/tmnf_user_template/TmForever "$DOCS_PATH/"
-
-    exec /etc/base-entrypoint.sh "$@"
+    echo "Transitioning to entrypoint..."
+    /usr/local/bin/base-entrypoint.sh "$@"
 
 %environment
     TZ=UTC
@@ -226,3 +219,5 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     NVIDIA_DRIVER_CAPABILITIES=all
     PULSE_SERVER=127.0.0.1:4713
     PORT=5900
+    WINEARCH=win32
+    #WINEPREFIX=/opt/tmnf
