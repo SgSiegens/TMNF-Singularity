@@ -172,7 +172,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     mkdir -p /opt/.vnc
     echo mypasswd | vncpasswd -f > /opt/.vnc/passwd
     echo 'export PASSWD=mypasswd' >> $SINGULARITY_ENVIRONMENT
-    chmod 600 /opt/.vnc/passwd
+    chmod 755 /opt/.vnc/passwd
     echo 'export PASSWD_PATH=/opt/.vnc/passwd' >> $SINGULARITY_ENVIRONMENT
 
     # ----------------------------------------------------

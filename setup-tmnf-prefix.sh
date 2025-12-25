@@ -10,7 +10,7 @@ if [ -d "$USER_PREFIX" ]; then
     echo "ERROR: A '.wine' directory already exists in your home."
     echo "It looks like you are mounting your HOST home directory."
     echo "To protect your files, this script will not continue."
-    echo "PLEASE: Run Singularity with '--no-home' or delete $USER_PREFIX"
+    echo "PLEASE: Run Singularity with '--no-home'"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     exit 1
 fi
