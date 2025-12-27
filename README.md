@@ -8,10 +8,16 @@ creators of [singularity-minerl](https://github.com/Sanfee18/singularity-minerl)
 which provided important foundations for the GPU handling used in this setup.
 
 ## Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Building](#building)
-3. [Running](#running)
+- [TMNF-Singularity](#tmnf-singularity)
+  * [Prerequisites](#prerequisites)
+  * [Building](#building)
+    + [Base Image](#base-image)
+    + [Vulkan Image](#vulkan-image)
+  * [Running](#running)
+  * [Sandbox](#sandbox)
+  * [Rendering Options](#rendering-options)
+  * [Troubleshooting](#troubleshooting)
+    + [Namespace Errors](#namespace-errors)
 
 ## Prerequisites
 
