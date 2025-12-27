@@ -32,12 +32,66 @@ You will also need to install the NVIDIA Container Toolkit if you haven’t alre
 > For more details, see [this related issue](https://github.com/apptainer/singularity/issues/5791) and the
 > official documentation on temporary directories [here](https://docs.sylabs.io/guides/main/user-guide/build_env.html#temporary-folders).
 
-The base Singularity image, which runs the game via VirtualGL, can be built with the following command.
+Like the Docker repository this repo also provides two Singularity definition files: `base-singularity.def` and 
+`vulkan-singularity.def`.
+
+The base definition file serves as the primary image. It builds the entire environment, including the game and all 
+required software, and uses VirtualGL for rendering.
+
+The Vulkan definition file builds on top of the base image and acts as an extension that installs Vulkan and DXVK into 
+the environment. It configures DXVK as the default rendering backend when running TMNF through Wine.
+
+### Base Image
+The base Singularity image runs the game using VirtualGL and can be built with the following command.
 Include the `-E` flag only if you have set environment variables for Singularity, such as `SINGULARITY_TMPDIR`:
 
 ```bash
 sudo -E singularity build <image name>.sif base-singularity.def
 ```
+
+### Vulkan Image
+
+**Coming soon.**
+
+## Running
+To launch the game using the image you built, execute the following command. 
+```bash 
+SINGULARITY_TMPDIR=/path/to/scratch/dir singularity run --fakeroot -w --no-home --nv --no-mount tmp <image name>.sif
+```
+* --fakeroot: This is essential because running the container requires writing to certain system files.
+
+* -w (writable): This enables the overlay file system, allowing the container to write data (such as game 
+configurations) during the session.
+
+* --no-home: This prevents the container from mounting your host’s home directory. It is used for isolation to 
+ensure that it cannot accidentally modify your personal host files (optional).
+
+* --nv: This binds the necessary NVIDIA drivers and libraries from your host to the container, which is required 
+for hardware-accelerated 3D rendering.
+
+* --no-mount tmp: This prevents the host’s /tmp directory from being mounted. This is necessary because sharing 
+the host's temporary files caused some conflicts with Wine during out testing.
+
+## Sandbox
+On some systems, the `--fakeroot` flag is not allowed. In these cases, you can use Sandbox Mode. Sandboxes are writable 
+by default and don't require "fakeroot" at runtime. To build a sandbox from a definition file:
+```bash
+sudo -E singularity build --sandbox <sandbox name> <def file name>.def
+```
+To convert an existing .sif file into a sandbox (sudo is not required):
+```bash
+singularity build --sandbox <sandbox name> <build image name>.sif 
+```
+To run the sandbox:
+```bash
+SINGULARITY_TMPDIR=/path/to/scratch/dir singularity run -w --no-home --nv --no-mount tmp <sandbox name>
+```
+
+## Rendering Options
+Refer to the TMNF-Docker [rendering section](https://github.com/SgSiegens/TMNF-Docker?tab=readme-ov-file#rendering-options)
+
+## Troubleshooting
+### Namespace Errors
 When building, you may encounter the following error:
 ```bash
 ERROR: Failed to create mount namespace: mount namespace requires privileges, check Apptainer/Singularity installation
@@ -48,5 +102,3 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 If this doesn’t resolve check [this issue](https://github.com/apptainer/apptainer/issues/2360) for additional
  suggestions.
-
-## Running

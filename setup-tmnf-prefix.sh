@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# This script creates a new Wine prefix for the calling user.
+# The base image must be built with sudo, which makes all created
+# files and directories owned by root. During runtime, Wine does
+# not allow a Wine prefix to be used by a different user.
+# To solve this, we create a new user-owned Wine prefix and
+# symlink its contents from the root-owned prefix, which has
+# read/write/execute permissions set during the build.
+
+
 WINE_PREFIXES_LOCATION="${WINE_PREFIXES_LOCATION:-/opt/wine-prefixes}"
 WINEPREFIX="${WINEPREFIX:-$WINE_PREFIXES_LOCATION/tmnf}"   
 USER_PREFIX="$WINE_PREFIXES_LOCATION/wine-$USER"
