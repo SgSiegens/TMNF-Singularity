@@ -192,13 +192,29 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     chmod -R 777 $WINEPREFIX
     chmod -R 777 $WINE_PREFIXES_LOCATION
 
+
 %runscript
-    echo "Starting container for user: ${USER}"
-    
-    /usr/local/bin/setup-tmnf-prefix.sh
-    
-    echo "Transitioning to entrypoint..."
-    /usr/local/bin/base-entrypoint.sh "$@"
+    echo "Starting container for user: $(whoami)"
+
+    # Base prefix location
+    export WINE_PREFIXES_LOCATION="${WINE_PREFIXES_LOCATION:-/opt/wine-prefixes}"
+
+    # Force 32-bit Wine
+    export WINEARCH=win32
+
+    # If NOT root, set up user prefix
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "Setting up Wine prefix for host user: $USER (effective UID: $(id -u))"
+        /usr/local/bin/setup-tmnf-prefix.sh
+        export USER_PREFIX="$WINE_PREFIXES_LOCATION/wine-$USER"
+        export WINEPREFIX="$USER_PREFIX"
+        echo "Finished setting up the new wine prefix"
+    else 
+        export USER="root"
+        export WINEPREFIX="$WINE_PREFIXES_LOCATION/tmnf"
+    fi
+
+    exec /usr/local/bin/base-entrypoint.sh "$@"
 
 %environment
     export TZ=UTC
@@ -222,4 +238,4 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     export PORT=5900
     export WINEARCH=win32
     export WINE_PREFIXES_LOCATION=/opt/wine-prefixes
-    #export WINEPREFIX=$WINE_PREFIXES_LOCATION/tmnf
+    export WINEPREFIX=$WINE_PREFIXES_LOCATION/tmnf

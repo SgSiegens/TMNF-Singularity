@@ -5,7 +5,7 @@ WINE_PREFIXES_LOCATION="${WINE_PREFIXES_LOCATION:-/opt/wine-prefixes}"
 WINEPREFIX="${WINEPREFIX:-$WINE_PREFIXES_LOCATION/tmnf}"   
 USER_PREFIX="$WINE_PREFIXES_LOCATION/wine-$USER"
 
-
+# the check has nothing do with the logic, its just a sanity check since the container should only use in32
 if [ "$WINEARCH" != "win32" ]; then
     echo "ERROR: WINEARCH must be win32"
     exit 1
