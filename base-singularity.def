@@ -118,6 +118,10 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     # ----------------------------------------------------
      
     export WINEDLLOVERRIDES=winemenubuilder.exe=d # this is just to supress some warnings
+    export WINEARCH=win32
+    export WINE_PREFIXES_LOCATION=/opt/wine-prefixes
+    export WINEPREFIX=$WINE_PREFIXES_LOCATION/tmnf
+    mkdir -p $WINEPREFIX
 
     # Install WineHQ
     WINE_BRANCH="stable"
@@ -130,12 +134,8 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
     # Install winetricks
     wget -nv -O /usr/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
-    && chmod +x /usr/bin/winetricks
+    && chmod +x /usr/bin/winetricks 
 
-    export WINEARCH=win32
-    export WINEPREFIX=/opt/tmnf
-    mkdir -p $WINEPREFIX
-    
     # Initialize Wine (headless)
     xvfb-run --auto-servernum wineboot --init
     wineserver --wait
@@ -158,7 +158,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
     cp -r /opt/build-files/TMLoader/. "$WINEPREFIX/drive_c/Program_Files_x86/TmNationsForever/"
 
-    WINE_ROOT_DOCS="/opt/tmnf/drive_c/users/root/Documents"
+    WINE_ROOT_DOCS=$WINEPREFIX/drive_c/users/root/Documents
     mkdir -p "$WINE_ROOT_DOCS"
     cp -r /opt/build-files/TMInterface "$WINE_ROOT_DOCS/"
     cp -r /opt/build-files/TmForever   "$WINE_ROOT_DOCS/"
@@ -172,7 +172,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     mkdir -p /opt/.vnc
     echo mypasswd | vncpasswd -f > /opt/.vnc/passwd
     echo 'export PASSWD=mypasswd' >> $SINGULARITY_ENVIRONMENT
-    chmod 755 /opt/.vnc/passwd
+    chmod 644 /opt/.vnc/passwd
     echo 'export PASSWD_PATH=/opt/.vnc/passwd' >> $SINGULARITY_ENVIRONMENT
 
     # ----------------------------------------------------
@@ -190,6 +190,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
     # Since we built as root but run as a normal user, everything in /opt must be writable.
     chmod -R 777 $WINEPREFIX
+    chmod -R 777 $WINE_PREFIXES_LOCATION
 
 %runscript
     echo "Starting container for user: ${USER}"
@@ -200,24 +201,25 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     /usr/local/bin/base-entrypoint.sh "$@"
 
 %environment
-    TZ=UTC
-    REFRESH=60
-    PASSWD=mypasswd
-    NOVNC_ENABLE=false
-    WEBRTC_ENCODER=nvh264enc
-    WEBRTC_ENABLE_RESIZE=false
-    ENABLE_AUDIO=false
-    ENABLE_BASIC_AUTH=true
-    LANG=en_US.UTF-8
-    LANGUAGE=en_US:en
-    LC_ALL=en_US.UTF-8
-    DISPLAY=:0
-    VGL_REFRESHRATE=60
-    VGL_ISACTIVE=1
-    VGL_DISPLAY=egl
-    VGL_WM=1
-    NVIDIA_DRIVER_CAPABILITIES=all
-    PULSE_SERVER=127.0.0.1:4713
-    PORT=5900
-    WINEARCH=win32
-    #WINEPREFIX=/opt/tmnf
+    export TZ=UTC
+    export REFRESH=60
+    export PASSWD=mypasswd
+    export NOVNC_ENABLE=false
+    export WEBRTC_ENCODER=nvh264enc
+    export WEBRTC_ENABLE_RESIZE=false
+    export ENABLE_AUDIO=false
+    export ENABLE_BASIC_AUTH=true
+    export LANG=en_US.UTF-8
+    export LANGUAGE=en_US:en
+    export LC_ALL=en_US.UTF-8
+    export DISPLAY=:0
+    export VGL_REFRESHRATE=60
+    export VGL_ISACTIVE=1
+    export VGL_DISPLAY=egl
+    export VGL_WM=1
+    export NVIDIA_DRIVER_CAPABILITIES=all
+    export PULSE_SERVER=127.0.0.1:4713
+    export PORT=5900
+    export WINEARCH=win32
+    export WINE_PREFIXES_LOCATION=/opt/wine-prefixes
+    #export WINEPREFIX=$WINE_PREFIXES_LOCATION/tmnf

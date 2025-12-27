@@ -1,50 +1,49 @@
 #!/bin/bash
 set -e
 
-SHARED_PREFIX="/opt/tmnf"
-USER_PREFIX="$HOME/.wine"
+WINE_PREFIXES_LOCATION="${WINE_PREFIXES_LOCATION:-/opt/wine-prefixes}"
+WINEPREFIX="${WINEPREFIX:-$WINE_PREFIXES_LOCATION/tmnf}"   
+USER_PREFIX="$WINE_PREFIXES_LOCATION/wine-$USER"
 
-# Protect host's real .wine directory
-if [ -d "$USER_PREFIX" ]; then
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo "ERROR: A '.wine' directory already exists in your home."
-    echo "It looks like you are mounting your HOST home directory."
-    echo "To protect your files, this script will not continue."
-    echo "PLEASE: Run Singularity with '--no-home'"
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
+if [ "$WINEARCH" != "win32" ]; then
+    echo "ERROR: WINEARCH must be win32"
     exit 1
 fi
 
-# Only if it doesn't exist
-if [ ! -d "$USER_PREFIX" ]; then
-    echo "Setting up instant symlinked prefix for user: $USER"
-    
-    # Create the base structure
-    mkdir -p "$USER_PREFIX/drive_c/users"
-    
-    # Copy the small metadata/registry files (must be writable)
-    rsync -a --exclude 'drive_c' "$SHARED_PREFIX/" "$USER_PREFIX/"
-
-    # We link everything EXCEPT 'users' so heavy data stays in /opt
-    for item in "$SHARED_PREFIX/drive_c/"*; do
-        basename=$(basename "$item")
-        
-        if [ "$basename" == "users" ]; then
-            continue
-        fi
-        
-        # Create the symlink in our local drive_c pointing to /opt/tmnf
-        ln -s "$item" "$USER_PREFIX/drive_c/$basename"
-    done
-
-    # We symlink the pre-built 'root' profile to the current $USER name.
-    ln -s "$SHARED_PREFIX/drive_c/users/root" "$USER_PREFIX/drive_c/users/$USER"
+if [ ! -d "$WINEPREFIX" ]; then
+    echo "ERROR: Wine prefix not found: $WINEPREFIX"
+    exit 1
 fi
 
-export WINEPREFIX="$USER_PREFIX"
-export WINEARCH=win32
+if [ ! -d "$USER_PREFIX" ]; then
+    echo "Creating new Wine prefix for user: $USER"
+    mkdir -p "$USER_PREFIX/drive_c/users"
+
+    rsync -a --exclude 'drive_c' "$WINEPREFIX/" "$USER_PREFIX/"
+
+    # Symlink everything in drive_c expect users
+    for item in "$WINEPREFIX/drive_c/"*; do
+        base="$(basename "$item")"
+
+        if [ "$base" = "users" ]; then
+            continue
+        fi
+
+        ln -s "$item" "$USER_PREFIX/drive_c/$base"
+    done
+
+    # Symlink root profile → user profile
+    if [ -d "$WINEPREFIX/drive_c/users/root" ]; then
+        ln -s "$WINEPREFIX/drive_c/users/root" "$USER_PREFIX/drive_c/users/$USER"
+    else
+        echo "WARNING: root user profile not found in shared prefix"
+    fi
+fi
 
 chmod -R u+rwX "$USER_PREFIX" 2>/dev/null || true
 
-echo "Wine Prefix ready at $WINEPREFIX"
+export WINEPREFIX="$USER_PREFIX"
+export WINEARCH
+
 exec "$@"
