@@ -2,13 +2,13 @@ BootStrap: docker
 From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
 
 %files
-    TMInterface /opt/build-files/TMInterface
-    TmForever   /opt/build-files/TmForever
-    TMLoader    /opt/build-files/TMLoader
+    game-data/TMInterface /opt/build-files/TMInterface
+    game-data/TmForever   /opt/build-files/TmForever
+    game-data/TMLoader    /opt/build-files/TMLoader
 
-    start-vnc.sh /usr/local/bin/start-vnc.sh
-    base-entrypoint.sh /usr/local/bin/base-entrypoint.sh
-    setup-tmnf-prefix.sh /usr/local/bin/setup-tmnf-prefix.sh
+    scripts/start-vnc.sh /usr/local/bin/start-vnc.sh
+    scripts/base-entrypoint.sh /usr/local/bin/base-entrypoint.sh
+    scripts/setup-tmnf-prefix.sh /usr/local/bin/setup-tmnf-prefix.sh
 
 %post
     # Supress interactive menu while installing keyboard-configuration

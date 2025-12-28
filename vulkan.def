@@ -3,8 +3,8 @@ From: ./tmnations.sif
 # as for now singularity and apptainer both do not support custom build args so we need to hard code it
 
 %files
-    xorg.conf /etc/X11/xorg.conf
-    vulkan-entrypoint.sh /usr/local/bin/vulkan-entrypoint.sh
+    config/xorg.conf /etc/X11/xorg.conf
+    scripts/vulkan-entrypoint.sh /usr/local/bin/vulkan-entrypoint.sh
 
 %post 
     apt-get update
