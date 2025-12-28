@@ -18,6 +18,7 @@ which provided important foundations for the GPU handling used in this setup.
   * [Rendering Options](#rendering-options)
   * [Troubleshooting](#troubleshooting)
     + [Namespace Errors](#namespace-errors)
+    + [Missing GPU Devices](#missing-gpu-devices)
 
 ## Prerequisites
 
@@ -108,3 +109,19 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 If this doesn’t resolve check [this issue](https://github.com/apptainer/apptainer/issues/2360) for additional
  suggestions.
+
+### Missing GPU Devices
+In some cases, not all GPU devices may be correctly mapped into the container. On Linux systems, make sure your user 
+belongs to the `video` and `render` groups. You can add your user to these groups by running:
+```bash
+usermod -aG render,video <your-username>
+```
+
+For the changes to take effect, you must **fully reboot** the system.
+After rebooting, you can verify that it worked correctly by running:
+
+```bash
+groups <your-username>
+```
+
+Ensure that both `video` and `render` appear in the list of groups.
