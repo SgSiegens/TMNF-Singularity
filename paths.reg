@@ -1,9 +1,0 @@
-REGEDIT4
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
-"Personal"="C:\\tmnf_data"
-"My Pictures"="C:\\tmnf_data"
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders]
-"Personal"="C:\\tmnf_data"
-"My Pictures"="C:\\tmnf_data"

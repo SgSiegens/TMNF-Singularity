@@ -5,7 +5,6 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     TMInterface /opt/build-files/TMInterface
     TmForever   /opt/build-files/TmForever
     TMLoader    /opt/build-files/TMLoader
-    #paths.reg   /opt/build-files/paths.reg
 
     start-vnc.sh /usr/local/bin/start-vnc.sh
     base-entrypoint.sh /usr/local/bin/base-entrypoint.sh
