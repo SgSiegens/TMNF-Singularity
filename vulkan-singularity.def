@@ -1,0 +1,85 @@
+BootStrap: localimage
+From: ./tmnations.sif
+# as for now singularity and apptainer both do not support custom build args so we need to hard code it
+
+%files
+    xorg.conf /etc/X11/xorg.conf
+    vulkan-entrypoint.sh /usr/local/bin/vulkan-entrypoint.sh
+
+%post 
+    apt-get update
+    apt-get install --no-install-recommends -y \
+        libvulkan1 \
+        vulkan-tools
+    rm -rf /var/lib/apt/lists/*
+
+    VULKAN_API_VERSION=$(dpkg -s libvulkan1 | grep -oP 'Version: [0-9|\.]+' | grep -oP '[0-9]+(\.[0-9]+)(\.[0-9]+)')
+
+    mkdir -p /etc/vulkan/icd.d
+
+    echo "{\n\
+    \"file_format_version\": \"1.0.0\",\n\
+    \"ICD\": {\n\
+        \"library_path\": \"libGLX_nvidia.so.0\",\n\
+        \"api_version\": \"${VULKAN_API_VERSION}\"\n\
+    }\n\
+    }" > /etc/vulkan/icd.d/nvidia_icd.json
+
+    # adopted from https://github.com/raldone01/docker_headless_dxvk/blob/main/im_dxvk_cpu/Dockerfile
+    # we dont need the x64 packages, but if you need them just modify hhe last cp command to include the x64 packages
+    # Install dxvk for wine
+
+    export DXVK_VERSION="2.6.1"
+    export DXVK_STORE_PATH=/usr/local/bin/dxvk
+
+    mkdir -p /tmp/dxvk
+    cd /tmp/dxvk
+
+    curl -L "https://github.com/doitsujin/dxvk/releases/download/v${DXVK_VERSION}/dxvk-${DXVK_VERSION}.tar.gz" -o dxvk-${DXVK_VERSION}.tar.gz
+
+    tar -xzf dxvk-${DXVK_VERSION}.tar.gz 
+    cd dxvk-${DXVK_VERSION} 
+
+    mkdir -p ${DXVK_STORE_PATH}
+    cp -r x32 ${DXVK_STORE_PATH}
+
+    #rm -rf /tmp/dxvk
+
+    xvfb-run --auto-servernum wineboot
+
+    cp ${DXVK_STORE_PATH}/x32/*.dll $WINEPREFIX/drive_c/windows/system32
+
+    before=$(stat -c '%Y' $WINEPREFIX/user.reg) 
+
+    dlls_paths=$(find /usr/local/bin/dxvk -name '*.dll')
+    for dll in $dlls_paths; do 
+        wine reg add "HKEY_CURRENT_USER\Software\Wine\DllOverrides" /v "$(basename "${dll%.*}")" /d native /f;
+    done
+    while [ $(stat -c '%Y' $WINEPREFIX/user.reg) = $before ]; do sleep 1; done
+    winetricks dxvk
+    
+    #permission fixes
+    chmod 755 /usr/local/bin/vulkan-entrypoint.sh
+
+%runscript
+    echo "Starting container for user: $(whoami)"
+
+    # Base prefix location
+    export WINE_PREFIXES_LOCATION="${WINE_PREFIXES_LOCATION:-/opt/wine-prefixes}"
+
+    # Force 32-bit Wine
+    export WINEARCH=win32
+
+    # If NOT root, set up user prefix
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "Setting up Wine prefix for host user: $USER (effective UID: $(id -u))"
+        /usr/local/bin/setup-tmnf-prefix.sh
+        export USER_PREFIX="$WINE_PREFIXES_LOCATION/wine-$USER"
+        export WINEPREFIX="$USER_PREFIX"
+        echo "Finished setting up the new wine prefix"
+    else 
+        export USER="root"
+        export WINEPREFIX="$WINE_PREFIXES_LOCATION/tmnf"
+    fi
+
+    exec /usr/local/bin/vulkan-entrypoint.sh "$@"
