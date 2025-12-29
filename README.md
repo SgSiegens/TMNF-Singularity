@@ -39,8 +39,8 @@ You will also need to install the NVIDIA Container Toolkit if you haven’t alre
 > For more details, see [this related issue](https://github.com/apptainer/singularity/issues/5791) and the
 > official documentation on temporary directories [here](https://docs.sylabs.io/guides/main/user-guide/build_env.html#temporary-folders).
 
-Like the Docker repository this repo also provides two Singularity definition files: `base-singularity.def` and 
-`vulkan-singularity.def`.
+Like the Docker repository this repo also provides two Singularity definition files: `base.def` and 
+`vulkan.def`.
 
 The base definition file serves as the primary image. It builds the entire environment, including the game and all 
 required software, and uses VirtualGL for rendering.
@@ -53,13 +53,25 @@ The base Singularity image runs the game using VirtualGL and can be built with t
 Include the `-E` flag only if you have set environment variables for Singularity, such as `SINGULARITY_TMPDIR`:
 
 ```bash
-sudo -E singularity build <image name>.sif base-singularity.def
+sudo -E singularity build <image name>.sif base.def
 ```
 
 ### Vulkan Image
+The Vulkan image is built using the Base Image as its foundation. This version integrates DXVK, which enables Wine to 
+utilize the Vulkan rendering backend rather than the default OpenGL backend.
+In order to build the image, you must either have already built the base image locally or, if you prefer to use a 
+prebuilt image from a registry like GHCR, manually edit the `vulkan.def` file to point to that remote source before 
+starting the build (for more information on how to change the target for buidling [see](https://apptainer.org/docs/user/latest/build_a_container.html#overview)).
+Run the following command to build the Vulkan Singularity image:
+```bash
+sudo -E singularity build <image_name>.sif vulkan.def
+```
+For more information have a look at the [Vulkan/DXVK section](https://github.com/SgSiegens/TMNF-Docker#vulkan-dxvk) of 
+the original Docker repository.
 
-**Coming soon.**
+---
 
+**Would you like me to rewrite the "Prerequisites" section to include the specific line of code that needs to be changed in the `.def` file?**
 ## Running
 To launch the game using the image you built, execute the following command. 
 ```bash 
