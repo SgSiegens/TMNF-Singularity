@@ -1,0 +1,45 @@
+name: Publish Singularity images to GHCR
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+
+jobs:
+  build-and-push-sif:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    container:
+      image: quay.io/singularity/singularity:v4.1.0 # you can change the version here 
+      options: --privileged
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Login to GHCR (ORAS)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            singularity remote login \
+              -u ${{ github.actor }} \
+              --password-stdin \
+              oras://ghcr.io
+
+      - name: Build base SIF
+        run: sudo -E singularity build tmnf-base.sif base.def
+
+      - name: Push base SIF to GHCR
+        run: singularity push tmnf-base.sif oras://ghcr.io/sgsiegens/tmnf-singularity-base:latest
+
+      
+      # - name: Build Vulkan SIF (from base)
+      #   run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
+      #
+      # - name: Push Vulkan SIF to GHCR
+      #   run: singularity push tmnf-vulkan.sif oras://ghcr.io/sgsiegens/tmnf-singularity-vulkan:latest
