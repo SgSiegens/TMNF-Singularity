@@ -37,9 +37,8 @@ jobs:
       - name: Push base SIF to GHCR
         run: singularity push tmnf-base.sif oras://ghcr.io/sgsiegens/tmnf-singularity-base:latest
 
-      
-      # - name: Build Vulkan SIF (from base)
-      #   run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
-      #
-      # - name: Push Vulkan SIF to GHCR
-      #   run: singularity push tmnf-vulkan.sif oras://ghcr.io/sgsiegens/tmnf-singularity-vulkan:latest
+      - name: Build Vulkan SIF (from base)
+        run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
+
+      - name: Push Vulkan SIF to GHCR
+        run: singularity push tmnf-vulkan.sif oras://ghcr.io/sgsiegens/tmnf-singularity-vulkan:latest

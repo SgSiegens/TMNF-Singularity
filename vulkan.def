@@ -1,6 +1,8 @@
-BootStrap: localimage
-From: ./tmnations.sif
-# as for now singularity and apptainer both do not support custom build args so we need to hard code it
+BootStrap: oras
+From: ghcr.io/sgsiegens/tmnf-singularity-base:latest
+# change this to whatever bootstrapping method you want to use e.g. for a local build base.sif:
+# BootStrap: localimage
+# From: /path/to/base.sif
 
 %files
     config/xorg.conf /etc/X11/xorg.conf
