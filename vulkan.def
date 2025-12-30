@@ -1,8 +1,8 @@
 BootStrap: oras
 From: ghcr.io/sgsiegens/tmnf-singularity-base:latest
 
-BootStrap: localimage
-From: ./tmnf-base.sif
+#BootStrap: localimage
+#From: ./tmnf-base.sif
 # change this to whatever bootstrapping method you want to use e.g. 
 
 %files
