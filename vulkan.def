@@ -1,8 +1,8 @@
-BootStrap: oras
-From: ghcr.io/sgsiegens/tmnf-singularity-base:latest
-# change this to whatever bootstrapping method you want to use e.g. for a local build base.sif:
-# BootStrap: localimage
-# From: /path/to/base.sif
+BootStrap: localimage
+From: ./tmnf-base.sif
+# change this to whatever bootstrapping method you want to use e.g. 
+#BootStrap: oras
+#From: ghcr.io/sgsiegens/tmnf-singularity-base:latest
 
 %files
     config/xorg.conf /etc/X11/xorg.conf

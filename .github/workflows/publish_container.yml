@@ -36,10 +36,8 @@ jobs:
 
       - name: Push base SIF to GHCR
         run: singularity push tmnf-base.sif oras://ghcr.io/sgsiegens/tmnf-singularity-base:latest
-      
-      - name: Cleanup Base Image
-        run: rm tmnf-base.sif
-
+     
+        # the vulkan image will use the local build base image
       - name: Build Vulkan SIF (from base)
         run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
 
