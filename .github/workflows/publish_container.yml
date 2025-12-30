@@ -36,10 +36,19 @@ jobs:
 
       - name: Push base SIF to GHCR
         run: singularity push tmnf-base.sif oras://ghcr.io/sgsiegens/tmnf-singularity-base:latest
-     
+      
+      - name: Set Singularity temp/cache dirs
+        run: |
+        mkdir -p /home/runner/singularity_tmp /home/runner/singularity_cache
+        echo "SINGULARITY_TMPDIR=/home/runner/singularity_tmp" >> $GITHUB_ENV
+        echo "SINGULARITY_CACHEDIR=/home/runner/singularity_cache" >> $GITHUB_ENV
+        echo "SINGULARITY_DISABLE_CACHE=no" >> $GITHUB_ENV  # Optional: keep cache but redirect
         # the vulkan image will use the local build base image
+
       - name: Build Vulkan SIF (from base)
-        run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
+      run: sudo -E env SINGULARITY_TMPDIR=/home/runner/singularity_tmp SINGULARITY_CACHEDIR=/home/runner/singularity_cache singularity build tmnf-vulkan.sif vulkan.def
+      # - name: Build Vulkan SIF (from base)
+      #   run: sudo -E singularity build tmnf-vulkan.sif vulkan.def
 
       - name: Push Vulkan SIF to GHCR
         run: singularity push tmnf-vulkan.sif oras://ghcr.io/sgsiegens/tmnf-singularity-vulkan:latest
