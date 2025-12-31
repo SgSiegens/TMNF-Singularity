@@ -7,6 +7,8 @@ Singularity version of the Docker container, which can be found
 creators of [singularity-minerl](https://github.com/Sanfee18/singularity-minerl), 
 which provided important foundations for the GPU handling used in this setup.
 
+---
+
 ## Table of Contents
 - [TMNF-Singularity](#tmnf-singularity)
   * [Prerequisites](#prerequisites)
@@ -15,17 +17,21 @@ which provided important foundations for the GPU handling used in this setup.
     + [Vulkan Image](#vulkan-image)
   * [Running](#running)
   * [Sandbox](#sandbox)
+  * [Runscript](#runscript)
   * [Rendering Options](#rendering-options)
   * [Troubleshooting](#troubleshooting)
     + [Namespace Errors](#namespace-errors)
     + [Missing GPU Devices](#missing-gpu-devices)
 
+--- 
 ## Prerequisites
 
 To install Singularity, follow the instructions in the [Quick Start Guide](https://docs.sylabs.io/guides/main/user-guide/quick_start.html). 
 This project primarily focuses on NVIDIA GPUs, as other GPU vendors have not been tested. 
 You will also need to install the NVIDIA Container Toolkit if you haven’t already, which can be found 
 [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
+--- 
 
 ## Building
 
@@ -66,12 +72,10 @@ Run the following command to build the Vulkan Singularity image:
 ```bash
 sudo -E singularity build <image_name>.sif vulkan.def
 ```
-For more information have a look at the [Vulkan/DXVK section](https://github.com/SgSiegens/TMNF-Docker#vulkan-dxvk) of 
-the original Docker repository.
+For more information have a look at the [Vulkan/DXVK section](https://github.com/SgSiegens/TMNF-Docker#vulkan-dxvk) of the original Docker repository.
 
 ---
 
-**Would you like me to rewrite the "Prerequisites" section to include the specific line of code that needs to be changed in the `.def` file?**
 ## Running
 To launch the game using the image you built, execute the following command. 
 ```bash 
@@ -91,6 +95,13 @@ for hardware-accelerated 3D rendering.
 * --no-mount tmp: This prevents the host’s /tmp directory from being mounted. This is necessary because sharing 
 the host's temporary files caused some conflicts with Wine during out testing.
 
+When running via this method the user gets mapped to be root inside the cotnainer. In this setting the wien rpefix is set to
+```bash`
+WINEPREFIX = /opt/wine-prefixes/tmnf
+``
+
+---
+
 ## Sandbox
 On some systems, the `--fakeroot` flag is not allowed. In these cases, you can use Sandbox Mode. Sandboxes are writable 
 by default and don't require "fakeroot" at runtime. To build a sandbox from a definition file:
@@ -106,8 +117,31 @@ To run the sandbox:
 SINGULARITY_TMPDIR=/path/to/scratch/dir singularity run -w --no-home --nv --no-mount tmp <sandbox name>
 ```
 
+--- 
+
+## Runscript
+Depending on the privilege level used to run the container, one of two behaviors will occur.
+
+When the container is run in **privileged mode** (e.g. through using `--fakeroot`), Singularity maps the user as `root` 
+inside the container. In this case, the Wine prefix is set to:
+
+```bash
+WINEPREFIX=/opt/wine-prefixes/tmnf
+```
+
+When the container is **not** run in privileged mode (e.g. sandbox mode), Wine cannot use the prefix above because 
+it was created at build time by `root`. As a result, the runscript automatically creates and uses a new Wine prefix 
+specific to the current user:
+
+```bash
+WINEPREFIX=/opt/wine-prefixes/wine-$USER
+```
+
+---
+
 ## Rendering Options
 Refer to the TMNF-Docker [rendering section](https://github.com/SgSiegens/TMNF-Docker?tab=readme-ov-file#rendering-options)
+---
 
 ## Troubleshooting
 ### Namespace Errors
