@@ -95,11 +95,6 @@ for hardware-accelerated 3D rendering.
 * --no-mount tmp: This prevents the host’s /tmp directory from being mounted. This is necessary because sharing 
 the host's temporary files caused some conflicts with Wine during out testing.
 
-When running via this method the user gets mapped to be root inside the cotnainer. In this setting the wien rpefix is set to
-```bash`
-WINEPREFIX = /opt/wine-prefixes/tmnf
-``
-
 ---
 
 ## Sandbox
@@ -141,6 +136,7 @@ WINEPREFIX=/opt/wine-prefixes/wine-$USER
 
 ## Rendering Options
 Refer to the TMNF-Docker [rendering section](https://github.com/SgSiegens/TMNF-Docker?tab=readme-ov-file#rendering-options)
+
 ---
 
 ## Troubleshooting
