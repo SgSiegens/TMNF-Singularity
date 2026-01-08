@@ -10,7 +10,7 @@ LOG_FILE=/tmp/logs
 mkdir -p "$LOG_FILE"
 chmod 700 "$LOG_FILE"
 
-export DISPLAY=":0"
+export DISPLAY="${DISPLAY:=:31}"
 Xorg -noreset -novtswitch -nolisten tcp +extension GLX +extension RANDR +extension RENDER -logfile "$LOG_FILE/xorg.log" -config /etc/X11/xorg.conf "$DISPLAY" &
 
 # Wait for X11 socket

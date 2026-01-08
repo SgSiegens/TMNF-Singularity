@@ -1,6 +1,7 @@
 #!/bin/bash
 # this might be confusing but out entrypointy.sh starts the display:0 
-export DISPLAY=":0"
+export DISPLAY="${DISPLAY:=:31}"
+echo "Using DISPLAY set to $DISPLAY"
 
 # Check if the X server is actually running on :0 (though entrypoint.sh should guarantee it)
 if xdpyinfo -display ${DISPLAY} >/dev/null 2>&1; then

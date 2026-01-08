@@ -191,6 +191,24 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     chmod -R 777 $WINEPREFIX
     chmod -R 777 $WINE_PREFIXES_LOCATION
 
+    # create some nvidia dirs which will not be found otherwise if we run singularity with -w and --nv flags 
+    NV_FILES="/var/run/nvidia-persistenced/socket \
+    /usr/share/egl/egl_external_platform.d/10_nvidia_wayland.json \
+    /usr/share/egl/egl_external_platform.d/15_nvidia_gbm.json \
+    /usr/share/nvidia/nvoptix.bin \
+    /usr/bin/nvidia-smi \
+    /usr/bin/nvidia-debugdump \
+    /usr/bin/nvidia-persistenced \
+    /usr/bin/nvidia-cuda-mps-control \
+    /usr/bin/nvidia-cuda-mps-server"
+
+    for path in $NV_FILES; do
+        # Create the PARENT directory first
+        mkdir -p "$(dirname "$path")"
+        
+        # Create an empty file to serve as the bind point
+        touch "$path"
+    done 
 
 %runscript
     echo "Starting container for user: $(whoami)"
@@ -227,7 +245,7 @@ From: nvcr.io/nvidia/cudagl:11.4.2-runtime-ubuntu20.04
     export LANG=en_US.UTF-8
     export LANGUAGE=en_US:en
     export LC_ALL=en_US.UTF-8
-    export DISPLAY=:0
+    export DISPLAY=:31
     export VGL_REFRESHRATE=60
     export VGL_ISACTIVE=1
     export VGL_DISPLAY=egl
